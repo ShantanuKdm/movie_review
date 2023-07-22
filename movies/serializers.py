@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import User
+from .models import Movie, User
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -15,3 +15,8 @@ class UserSerializer(serializers.ModelSerializer):
             instance.set_password(password)
         instance.save()
         return instance
+
+class MovieSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Movie
+        fields = '__all__'
