@@ -27,10 +27,7 @@ source <virtual-env-path>/bin/activate
 git clone git@github.com:devShantanu-Kadam/movie_review.git
 ```
 * Install mysql on machine if not installed already
-```sh 
-cd riq-backend
-```
-
+  
 ```sh 
 run pip install -r requirements.txt
 ```
