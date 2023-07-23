@@ -146,5 +146,5 @@ class ReviewView(APIView):
             review_updated_at = datetime.datetime.utcnow(),
             url = None
         )
-        return Response({"success: True"})
+        return Response({"success": True})
         
