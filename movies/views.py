@@ -8,6 +8,13 @@ from rest_framework.exceptions import AuthenticationFailed
 from rest_framework.views import APIView
 from .serializers import MovieSerializer, UserSerializer
 from .models import Review, User, Movie
+from rest_framework.exceptions import APIException
+
+
+class AuthenticationFailed(APIException):
+    status_code = status.HTTP_401_UNAUTHORIZED
+    default_detail = 'Incorrect authentication credentials.'
+    default_code = 'authentication_failed'
 
 #user registration
 class RegistserView(APIView):
@@ -15,7 +22,7 @@ class RegistserView(APIView):
         serializer = UserSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
-        return Response(serializer.data)
+        return Response(serializer.data,status=status.HTTP_201_CREATED)
 
 #user login
 class LoginView(APIView):
@@ -82,7 +89,7 @@ class MovieView(APIView):
 
     def get(self, request):
         token = request.COOKIES.get('jwt')
-
+        
         if not token:
             raise AuthenticationFailed('Unauthenticated!')
 
@@ -109,37 +116,35 @@ class RatingView(APIView):
 class ReviewView(APIView):
 
     def post(self, request):
+        token = request.COOKIES.get('jwt')
+
+        if not token:
+            raise AuthenticationFailed('Unauthenticated!')
+
         try:
-            token = request.COOKIES.get('jwt')
+            payload = jwt.decode(token, 'secret', algorithms=['HS256'])
+        except jwt.ExpiredSignatureError:
+            raise AuthenticationFailed('Unauthenticated!')
 
-            if not token:
-                raise AuthenticationFailed('Unauthenticated!')
+        user = User.objects.filter(id=payload['id']).first()
+        user_details = {
+                "name" : user.name,
+                "username" : user.username,
+            }
 
-            try:
-                payload = jwt.decode(token, 'secret', algorithms=['HS256'])
-            except jwt.ExpiredSignatureError:
-                raise AuthenticationFailed('Unauthenticated!')
+        movie = Movie.objects.filter(id = request.data['local_movie_id']).first()
+        if not movie:
+            raise Exception('Movie does not exist')
 
-            user = User.objects.filter(id=payload['id']).first()
-            user_details = {
-                    "name" : user.name,
-                    "username" : user.username,
-                }
-
-            movie = Movie.objects.filter(id = request.data['local_movie_id']).first()
-            if not movie:
-                raise Exception('Movie does not exist')
-
-            Review.objects.create(
-                author = user.name,
-                author_details = user_details,
-                content = request.data['content'],
-                review_created_at = datetime.datetime.utcnow(),
-                review_id = None,
-                movie = movie,
-                review_updated_at = datetime.datetime.utcnow(),
-                url = None
-            )
-            return Response({"success: True"})
-        except Exception as e:
-            return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        Review.objects.create(
+            author = user.name,
+            author_details = user_details,
+            content = request.data['content'],
+            review_created_at = datetime.datetime.utcnow(),
+            review_id = None,
+            movie = movie,
+            review_updated_at = datetime.datetime.utcnow(),
+            url = None
+        )
+        return Response({"success: True"})
+        
