@@ -80,7 +80,7 @@ class GetMoviesView(APIView):
                     review["movie_id"] = _movie.id
                     Review.objects.update_or_create(review_id = review_id,defaults=review)
 
-            return Response({"success: True"})
+            return Response({"success": True})
         except Exception as e:
             return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -146,5 +146,5 @@ class ReviewView(APIView):
             review_updated_at = datetime.datetime.utcnow(),
             url = None
         )
-        return Response({"success: True"})
+        return Response({"success": True})
         
